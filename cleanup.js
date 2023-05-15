@@ -27,14 +27,19 @@ async function rimRafWorkingDir() {
 
 async function cleanupDanglingDockerResources() {
   const runningStuff = await getExecOutput('docker ps -a -q');
-  await getExecOutput(`docker stop ${runningStuff.stdout}`);
+  if (runningStuff.stdout === "") {
+    console.log("Skipping docker cleanup, no running containers");
+  } else {
+    console.log("Stopping running containers");
+    await getExecOutput(`docker stop ${runningStuff.stdout}`);
+    console.log("Stopped all running Docker containers");
+  }
 }
 
 
 async function main() {
   try {
-    await rimRafWorkingDir();
-    await cleanupDanglingDockerResources();
+    await Promise.all([cleanupDanglingDockerResources(), rimRafWorkingDir()]);
   } catch (error) {
     core.setFailed(error.message);
   }
